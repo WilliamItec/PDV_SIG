@@ -1,0 +1,110 @@
+Table: POS_NOTAS_TOTAIS
+Columns:
+ID_NOTA int(10) AI PK 
+DATA_CAIXA datetime 
+DATA_CONFIRMACAO datetime 
+HORA_OPERACAO char(6) 
+ORIGEM varchar(6) 
+DESTINO varchar(6) 
+ID_TIPO_VENDA int(10) 
+ID_MOTIVO varchar(6) 
+DOCUMENTO varchar(44) 
+ID_CLIENTE varchar(30) 
+ID_TIPO_CLIENTE int(10) 
+ID_PARCERIA int(10) 
+ID_PROMOCAO int(10) 
+CUPOM_PROMOCAO varchar(15) 
+VALOR decimal(19,4) 
+QTD int(10) 
+TROCO decimal(19,4) 
+STATUS varchar(2) 
+ID_USER int(10) 
+ID_ESTACAO int(10) 
+ITENS int(10) 
+LOTE varchar(14) 
+FLAG_DEVOLUCAO char(1) 
+CRM varchar(20) 
+C_FORN varchar(15) 
+CREDITO_OPERACAO decimal(19,4) 
+MATRICULA varchar(15)
+
+===========================================
+
+Table: POS_NOTAS_DETALHES
+Columns:
+ID_LANCAMENTO int(11) AI 
+ID_NOTA int(10) PK 
+P_CODIGO char(6) PK 
+QTD int(10) 
+VALOR decimal(19,4) 
+DESCONTO decimal(19,4) 
+STATUS varchar(100) 
+STRING_FISCAL char(1) 
+IBPT_NACIONAL decimal(19,4) 
+QTD_ESTOQUE int(10) 
+VALOR_ICMS decimal(19,4) 
+VALOR_SUBST decimal(19,4) 
+ALIQUOTA varchar(3) 
+CHAVE_NF_ORIGEM varchar(44)
+
+============================================
+Table: POS_CARTOES
+Columns:
+ID_LANCAMENTO int(10) AI PK 
+ID_MOEDA int(10) 
+DATA_CAIXA datetime 
+ID_AUXILIAR int(10) 
+TIPO char(1) 
+RESUMO varchar(15) 
+QTD int(10) 
+PARCELAS int(10) 
+VALOR_BRUTO decimal(19,4)
+
+=========================================
+Table: POS_CARTOES_TEF
+Columns:
+DATA_CAIXA datetime 
+NSU double 
+ID_MOEDA int(10) 
+ID_AUXILIAR int(10) 
+PARCELAS int(10) 
+VALOR_BRUTO decimal(19,4) 
+ID_BANDEIRA char(5) 
+ID_REDE char(5)
+=========================================
+Table: POS_RECEBIMENTOS
+Columns:
+ID_LANCAMENTO int(10) AI PK 
+ID_NOTA int(10) 
+ID_MOTIVO varchar(6) 
+ID_MOEDA int(10) 
+ID_AUXILIAR int(10) 
+HORA char(6) 
+VALOR decimal(19,4)
+=================================================
+MZT_MOEDAS
+Table: MTZ_MOEDA
+Columns:
+ID_MOEDA int(10) PK 
+DESCRICAO varchar(130) 
+TIPO char(1) 
+STATUS char(1) 
+AUXILIAR char(1) 
+TROCO_MAXIMO decimal(19,4)
+
+1	DINHEIRO	E	A	N	100.0000
+3	CARTAO DE CREDI	E	A	S	0.0000
+4	CONV. EMPRESA	E	A	S	0.0000
+5	DEVOLUÇÃO	E	A	N	0.0000
+10	CONV. BIGBEN	E	A	N	0.0000
+19	FURTO-ROUBO	S	A	N	0.0000
+519	QUEBRA DE CAIXA	S	A	N	0.0000
+524	CREDITO AMIGO	E	A	N	0.0000
+615	VALEPRESENTE	E	A	N	0.0000
+950	TAXI DIVERSOS	S	A	N	0.0000
+1028	DESC. CONDICONAL - DIF. TABELA	S	A	N	0.0000
+1166	VENDAS CANCELADAS (CARTAO MAXXCARD)	S	A	N	0.0000
+1188	ENTRADA DE MERCADORIA EM CONSIGNAÇÃO	S	A	S	0.0000
+1195	V. VALE PRESENTE ( REGATE )	E	A	S	0.0000
+1196	VENDA CARTÃO AMIGO	E	A	S	0.0000
+					

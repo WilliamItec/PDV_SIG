@@ -1,0 +1,950 @@
+DROP VIEW public.v_cupomfiscal;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal AS 
+ SELECT vd.cd_emp,
+    vd.cd_filial,
+    vd.cd_cx,
+    vd.dt_vd,
+    COALESCE(vd.dt_cad, vd.dt_vd) AS dt_cad,
+    COALESCE(vd.hr_vd, vd.dt_cad) AS hr_vd,
+    vd.nr_orc,
+    vd.nr_ped_televd,
+    vd.orig_orc AS origem_orc,
+    vd.cd_vd,
+    vd.nr_ecf,
+    vd.st_vd,
+    vd.cont_cupom_fisc AS contador_cupom_fiscal,
+    vd.cd_mov AS codigo_movimento,
+    NULL::character varying AS cgc_filial,
+    NULL::character varying AS nm_filial,
+    vd.cd_cli,
+    vd.cgc_cpf AS cgc_cli,
+    NULL::character varying AS nm_cli,
+    vd.nr_cartao_marka AS numero_cartao,
+    vd.cd_conv,
+    NULL::integer AS cd_cli_conv,
+    NULL::character varying AS cgc_conv,
+    NULL::character varying AS nm_conv,
+    COALESCE(vd.qtd_dias_prorrog, 0) AS dias_prorrog_conv,
+    vd.vlr_liq_vd,
+    vd.vlr_tot_prod,
+    vd.vlr_vd,
+    vd.vlr_desc,
+    vd.vlr_desc_itens,
+    vd.vlr_dinh,
+    vd.vlr_troco,
+        CASE
+            WHEN vd.tipo_pbm > 0 AND COALESCE(vd.vlr_conv_pbm, 0::numeric) = 0::numeric AND vd.vlr_conv = 0::numeric THEN 0::numeric
+            ELSE vd.vlr_conv
+        END AS vlr_conv,
+    vd.qt_parc_conv,
+    vd.vlr_dup,
+    vd.vl_chqs_a_vista AS valor_cheque_a_vista,
+    vd.vl_chqs_a_prz AS valor_cheque_a_prazo,
+    ncc.cd_ctr_ncc,
+    ncc.vlr_ncc,
+    vd.nr_cel_recarga,
+    vd.vlr_recarga_cel,
+    vd.nm_oper_cel,
+    vd.nm_comprador,
+    vd.dados_adicionais,
+    vd.nr_serie_imp AS nr_serie_ecf,
+    vd.vs_pdv AS versao_pdv,
+    vd.vs_pdv_rc AS versao_pdv_rc,
+    NULLIF(COALESCE(vd.vlr_dinh, 0::numeric) <> 0::numeric, false) AS contem_dinheiro,
+        CASE
+            WHEN vd.tipo_pbm > 0 AND COALESCE(vd.vlr_conv_pbm, 0::numeric) = 0::numeric AND vd.vlr_conv = 0::numeric THEN NULL::boolean
+            ELSE true
+        END AS contem_convenio,
+    NULLIF(COALESCE(vd.vlr_dup, 0::numeric) <> 0::numeric, false) AS contem_duplicata,
+    NULLIF(COALESCE(ncc.vlr_ncc, 0::numeric) <> 0::numeric, false) AS contem_ncc,
+    NULLIF(COALESCE(vd.vlr_recarga_cel, 0::numeric) <> 0::numeric, false) AS contem_recarga_cel,
+    vd.cd_usu AS cd_operador,
+    ''::character varying AS nm_operador,
+    vd.cd_usu_cancel,
+    ''::character varying AS nm_usu_cancel,
+    vd.cd_mt_cancel AS codigo_motivo_cancelamento,
+    NULLIF(vd.st_vd <> 0::numeric, false) AS is_cancelado,
+    vd.st_canc_paf = 1 AS is_cancelado_paf,
+    COALESCE(vd.st_canc_paf, 0) AS st_canc_paf,
+    COALESCE(audit.cd_outr_procd, 0::numeric) AS cd_outro_procedimento,
+    COALESCE(audit.cd_usu, 0::numeric) AS cd_usu_procedimento,
+    cli_pbm.cd_cli AS cd_cli_pbm,
+    COALESCE(vd.reg_alterado, 0) = 1 AS registroalterado,
+    vd.vd_troca_fidel AS is_debitar_pontos,
+    COALESCE(vd.vlr_imposto, 0::numeric) AS valor_ibpt,
+    COALESCE(vd.tx_med_imposto, 0::numeric) AS percentual_ibpt,
+    COALESCE(vd.flag_consolidado, 0) AS flag_consolidado,
+    vd.vlr_conv_pbm,
+    vd.flag_nfce,
+    nf_sai.cd_nf AS cd_nf_sai,
+    nfce_cancel.cd_vd AS cancel_nfce,
+    COALESCE(nfce_cancel.xml_canc, ''::character varying) AS xml_cancel,
+    COALESCE(nfce_cancel.tp_canc, 0) AS tp_canc,
+    COALESCE(nfce_cancel.chv_nfce, ''::character varying) AS chv_nfce_cancel,
+    nfce_cancel.dt_emis AS dt_emis_cancel,
+    COALESCE(nfce_cancel.aut_canc, ''::character varying) AS aut_canc,
+    COALESCE(nfce_cancel.ds_motivo, ''::character varying) AS ds_motivo_cancel
+   FROM pdv_vd vd
+     LEFT JOIN pdv_vd_est_nf_sai nf_sai ON vd.cd_emp = nf_sai.cd_emp AND vd.cd_filial = nf_sai.cd_filial AND vd.cd_vd = nf_sai.cd_vd
+     LEFT JOIN est_nfce_env e_nfce ON vd.cd_emp = e_nfce.cd_emp::numeric AND vd.cd_filial = e_nfce.cd_filial::numeric AND vd.nr_ecf = e_nfce.cd_nf::numeric AND vd.cd_nf_serie::text = e_nfce.cd_nf_serie::text
+     LEFT JOIN pdv_vd_ncc ncc ON vd.cd_emp = ncc.cd_emp AND vd.cd_filial = ncc.cd_filial AND vd.cd_vd = ncc.cd_vd
+     LEFT JOIN pdv_vd_glb_procd_outr_lib audit ON vd.cd_emp = audit.cd_emp AND vd.cd_filial = audit.cd_filial AND vd.cd_vd = audit.cd_vd AND (audit.cd_outr_procd = ANY (ARRAY[90::numeric, 91::numeric, 93::numeric, 94::numeric]))
+     LEFT JOIN rc_cli cli_pbm ON vd.cd_emp = cli_pbm.cd_emp AND vd.tipo_pbm::numeric = cli_pbm.rot_conv_ext AND (cli_pbm.rot_conv_ext <> ALL (ARRAY['-1'::integer::numeric, 0::numeric]))
+     LEFT JOIN est_nfce_canc nfce_cancel ON vd.cd_emp = nfce_cancel.cd_emp::numeric AND vd.cd_filial = nfce_cancel.cd_filial::numeric AND vd.cd_vd = nfce_cancel.cd_vd
+  WHERE vd.st_vd > '-1'::integer::numeric;
+
+ALTER TABLE public.v_cupomfiscal
+  OWNER TO postgres;
+
+  
+  DROP VIEW public.v_cupomfiscal_cartao;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_cartao AS 
+ SELECT vd.cd_emp,
+    vd.cd_filial,
+    vd.dt_vd,
+    COALESCE(vd.dt_cad, vd.dt_vd) AS dt_cad,
+    COALESCE(vd.dt_cad, vd.hr_vd) AS hr_vd,
+    vd.cd_cx,
+    vd.cd_vd,
+    vd.nr_ecf,
+    vd.st_vd,
+        CASE
+            WHEN COALESCE(tef.cd_adm_cartao, 0::numeric) > 0::numeric THEN tef.cd_adm_cartao
+            WHEN tef.cd_adm_cartao = 0::numeric AND tef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.cd_adm_cartao
+               FROM rc_adm_cartao
+              WHERE rc_adm_cartao.cd_emp = tef.cd_emp AND rc_adm_cartao.tp_adm = tef.tp_adm::numeric AND rc_adm_cartao.parc = tef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+             LIMIT 1)
+            ELSE NULL::numeric
+        END AS cd_conv,
+        CASE
+            WHEN COALESCE(tef.cd_adm_cartao, 0::numeric) > 0::numeric THEN adm.nm_usual
+            WHEN tef.cd_adm_cartao = 0::numeric AND tef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.nm_usual
+               FROM rc_adm_cartao
+              WHERE rc_adm_cartao.cd_emp = tef.cd_emp AND rc_adm_cartao.tp_adm = tef.tp_adm::numeric AND rc_adm_cartao.parc = tef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+             LIMIT 1)
+            ELSE NULL::character varying
+        END AS nm_conv,
+    tef.vl_cartao AS vlr_cartao,
+    tef.vl_saque_cartao AS vlr_saque,
+        CASE
+            WHEN tef.qt_parc > 0 THEN tef.qt_parc::numeric
+            ELSE adm.parc
+        END AS qt_parc,
+    tef.cod_rede,
+    tef.cod_bandeira,
+        CASE
+            WHEN tef.cod_modalidade::text = ''::text THEN '0'::character varying
+            ELSE tef.cod_modalidade
+        END AS cod_modalidade,
+    tef.tp_adm AS tp_administradora,
+        CASE
+            WHEN COALESCE(
+            CASE
+                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
+                ELSE tef.nsu_tef
+            END, 0::numeric) > 0::numeric AND
+            CASE
+                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
+                ELSE tef.nsu_tef
+            END <> 1::numeric THEN tef.nsu_tef
+            WHEN
+            CASE
+                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
+                ELSE tef.nsu_tef
+            END = 1::numeric THEN tef.cd_trn_tef
+            WHEN COALESCE(
+            CASE
+                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
+                ELSE tef.nsu_tef
+            END, 0::numeric) = 0::numeric THEN tef.cd_trn_tef
+            ELSE NULL::numeric
+        END AS nr_transacao,
+        CASE
+            WHEN COALESCE(tef.nr_autorizacao, '0'::character varying)::text > '0'::text AND tef.nr_autorizacao::text <> '1'::text THEN tef.nr_autorizacao
+            WHEN tef.nr_autorizacao::text = '1'::text THEN tef.cd_trn_tef::character varying
+            WHEN tef.nr_autorizacao::text = '0'::text THEN tef.cd_trn_tef::character varying
+            ELSE NULL::character varying
+        END AS nr_autorizacao,
+    tef.ds_bandeira AS bandeira,
+    COALESCE(tef.nr_estabelecimento, ''::character varying) AS nr_estabelecimento,
+    COALESCE(tef.nr_comprovante, ''::character varying) AS nr_comprovante,
+        CASE
+            WHEN tef.gerenciador_tef = 1 THEN 'SCOPE'::character varying
+            WHEN tef.trn_pos = 1 THEN 'POS'::character varying
+            ELSE 'SITEF'::character varying
+        END AS tef_gateway,
+    COALESCE(vd.flag_consolidado, 0) AS flag_consolidado
+   FROM pdv_vd vd
+     JOIN pdv_vd_tef tef ON vd.cd_emp = tef.cd_emp AND vd.cd_filial = tef.cd_filial AND vd.cd_vd = tef.cd_vd
+     LEFT JOIN rc_adm_cartao adm ON tef.cd_emp = adm.cd_emp AND tef.cd_adm_cartao = adm.cd_adm_cartao
+  WHERE tef.vl_cartao > 0::numeric AND (adm.tp_adm <> 6::numeric OR tef.cd_adm_cartao = 0::numeric);
+
+ALTER TABLE public.v_cupomfiscal_cartao
+  OWNER TO postgres;
+
+  
+  DROP VIEW public.v_cupomfiscal_cheque;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_cheque AS 
+ SELECT vd.cd_emp,
+    vd.cd_filial,
+    vd.dt_vd,
+    vd.dt_cad,
+    vd.cd_cx,
+    vd.cd_vd,
+    vd.nr_ecf,
+    vd.st_vd,
+    vd.vlr_troco_chq,
+    chq.cd_bc_chq AS cd_bc,
+    NULL::character varying AS nm_bc,
+    chq.nr_ord,
+    chq.nr_chq,
+    chq.ano_chq,
+    chq.vl_chq AS vlr_chq,
+    chq.dt_emi,
+    chq.dt_vencto,
+    chq.ag_chq,
+    ch_emi.cd_emi,
+    chq.cpf_cgc_emi AS cgc_emi,
+    chq.nm_emi,
+    chq.fone_emi,
+    chq.nr_cnt_chq,
+    chq.aut_chq,
+    chq.comp_chq,
+    chq.c1_chq,
+    chq.c2_chq,
+    chq.sr_chq AS c3_chq,
+    chq.cmc7_chq,
+    chq.mes_ano_cnt_chq,
+    COALESCE(vd.flag_consolidado, 0) AS flag_consolidado
+   FROM pdv_vd vd
+     JOIN pdv_vd_chqs chq ON vd.cd_emp = chq.cd_emp AND vd.cd_filial = chq.cd_filial AND vd.cd_vd = chq.cd_vd
+     LEFT JOIN chq_emi ch_emi ON chq.cpf_cgc_emi::text = ch_emi.cgc_cpf::text
+  WHERE vd.st_vd > '-1'::integer::numeric;
+
+ALTER TABLE public.v_cupomfiscal_cheque
+  OWNER TO postgres;
+
+  DROP VIEW public.v_cupomfiscal_crediario;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_crediario AS 
+ SELECT vd.cd_emp,
+    vd.cd_filial,
+    vd.dt_vd,
+    vd.dt_cad,
+    vd.cd_cx,
+    vd.cd_vd,
+    vd.nr_ecf,
+    vd.st_vd,
+    tef.cd_adm_cartao AS cd_conv,
+    adm.nm_usual AS nm_conv,
+    tef.vl_cartao AS vlr_cartao,
+    tef.vl_saque_cartao AS vlr_saque,
+    adm.parc AS qt_parc,
+    tef.cod_rede,
+    tef.cod_bandeira,
+    tef.cod_modalidade,
+    tef.nsu_tef AS nr_transacao,
+    tef.nr_autorizacao,
+        CASE
+            WHEN tef.gerenciador_tef = 1 THEN 'scope'::text
+            WHEN tef.trn_pos = 1 THEN 'pos'::text
+            ELSE 'sitef'::text
+        END AS tef_gateway,
+    COALESCE(cred.cd_parc, 1::numeric) AS cd_parc,
+    COALESCE(cred.dt_parc, vd.dt_vd) AS dt_parc,
+    COALESCE(cred.vl_parc, tef.vl_cartao) AS vlr_parc,
+        CASE
+            WHEN COALESCE(cred.cd_parc, 0::numeric) = 0::numeric THEN 1
+            ELSE 0
+        END AS parc_mnt_pdv_erro,
+    cred.cgc_cpf,
+    cred.nr_fatura,
+    COALESCE(vd.flag_consolidado, 0) AS flag_consolidado
+   FROM pdv_vd vd
+     JOIN pdv_vd_tef tef ON vd.cd_emp = tef.cd_emp AND vd.cd_filial = tef.cd_filial AND vd.cd_vd = tef.cd_vd
+     LEFT JOIN rc_adm_cartao adm ON tef.cd_emp = adm.cd_emp AND tef.cd_adm_cartao = adm.cd_adm_cartao
+     LEFT JOIN pdv_vd_cred cred ON vd.cd_emp = cred.cd_emp AND vd.cd_filial = cred.cd_filial AND vd.cd_vd = cred.cd_vd
+  WHERE vd.st_vd > '-1'::integer::numeric AND adm.tp_adm = 6::numeric AND vd.vlr_cartao > 0::numeric;
+
+ALTER TABLE public.v_cupomfiscal_crediario
+  OWNER TO postgres;
+
+  DROP VIEW public.v_cupomfiscal_item;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_item AS 
+ SELECT vd.cd_emp,
+    vd.cd_filial,
+    vd.dt_vd,
+    COALESCE(vd.dt_cad, vd.dt_vd) AS dt_cad,
+    COALESCE(vd.dt_cad, vd.hr_vd) AS hr_vd,
+    vd.cd_cx,
+    vd.cd_vd,
+    vd.nr_ecf,
+    vd.st_vd,
+    it.cd_it,
+    it.cd_prod,
+    est_orc_glb_medico.cd_medico_rec,
+    NULL::character varying AS ds_prod,
+    NULL::character varying AS cd_barra,
+    it.qt_it,
+    it.vlr_it,
+    it.vlr_liq_it AS tot_it,
+    it.st_it,
+    it.tipo_desconto,
+    COALESCE(it.tx_desc, 0::numeric) AS tx_desc,
+    COALESCE(it.vlr_desc_verba, 0::numeric) AS vlr_desc_verba,
+    COALESCE(it.vlr_desc_tot_rat, 0::numeric) AS vlr_desc_rateio,
+    it.cd_trib_fc,
+    it.tx_icms_it,
+    it.tx_red_it,
+    it.cd_vend,
+    NULL::character varying AS nm_vend,
+    it.cd_vend_verba,
+    NULL::character varying AS nm_vend_verba,
+    it.cd_usu_cancel,
+    NULL::character varying AS nm_usu_cancel,
+    it.qtde_ponto_fidel AS qt_pontos_fidel,
+    it.cd_grp_comis_pdv AS cd_grupo_comissao,
+    it.st_it <> 1::numeric AS is_cancelado,
+    COALESCE(lote.cd_lote, 0::numeric) AS cd_lote,
+    0 AS numero_lote,
+    COALESCE(lote.qtde_lote, 0::numeric) AS qtde_prod_lote,
+    COALESCE(it.reg_alterado, 0) = 1 AS registroalteradoitem,
+    COALESCE(it.tipo_imposto, 0::numeric) AS tipo_imposto,
+    it.vlr_imposto_it AS valor_ibpt_item,
+    it.tx_imposto_it AS percentual_ibpt_item,
+    it.nr_protocolo_manipulado,
+    COALESCE(vd.flag_consolidado, 0) AS flag_consolidado,
+    COALESCE(it.perc_desc_diff, 0::numeric) AS perc_desc_diff
+   FROM pdv_vd vd
+     JOIN pdv_vd_it it ON it.cd_emp = vd.cd_emp AND it.cd_filial = vd.cd_filial AND it.cd_vd = vd.cd_vd
+     LEFT JOIN pdv_vd_it_lote lote ON it.cd_emp = lote.cd_emp AND it.cd_filial = lote.cd_filial AND vd.cd_vd = lote.cd_vd AND it.cd_it = lote.cd_it
+     LEFT JOIN est_orc_glb_medico ON vd.cd_emp = est_orc_glb_medico.cd_emp::numeric AND vd.cd_filial = est_orc_glb_medico.cd_filial::numeric AND vd.nr_orc = est_orc_glb_medico.nr_orc::numeric AND it.cd_prod = est_orc_glb_medico.cd_prod::numeric AND it.cd_it = est_orc_glb_medico.cd_it::numeric
+  WHERE vd.st_vd > '-1'::integer::numeric AND vd.nr_ecf > 0::numeric;
+
+ALTER TABLE public.v_cupomfiscal_item
+  OWNER TO postgres;
+
+  
+  DROP VIEW public.v_cupomfiscal_item_receita;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_item_receita AS 
+ SELECT pdv_vd_it.cd_emp,
+    pdv_vd_it.cd_filial,
+    pdv_vd_it.cd_vd,
+    pdv_vd_it.cd_it,
+    pdv_vd_it.cd_medico_rec AS prescritor_id,
+    pdv_vd_it.nr_receita AS receita_numero,
+    pdv_vd_it.dt_receita AS receita_data,
+    pdv_vd_it.nm_comprador_receita AS comprador_nome,
+    pdv_vd_it.nr_doc_cli_receita AS comprador_doc_numero,
+    pdv_vd_it.tp_doc_cli_receita AS comprador_doc_tipo,
+    NULL::character varying AS comprador_doc_expedidor,
+    pdv_vd_it.uf_receita AS comprador_doc_uf,
+    NULL::character varying AS paciente_cid,
+    pdv_vd_it.idade_receita AS paciente_idade,
+    pdv_vd_it.nm_paciente_receita AS paciente_nome,
+    NULL::character varying AS paciente_sexo,
+    0 AS paciente_tipo_idade
+   FROM pdv_vd_it
+     JOIN pdv_vd vd ON vd.cd_emp = pdv_vd_it.cd_emp AND vd.cd_filial = pdv_vd_it.cd_filial AND vd.cd_vd = pdv_vd_it.cd_vd
+  WHERE COALESCE(pdv_vd_it.cd_receita, 0) > 0 AND vd.st_vd > '-1'::integer::numeric
+UNION
+ SELECT orc.cd_emp,
+    orc.cd_filial,
+    vd.cd_vd,
+    it.cd_it,
+    orc.cd_medico_rec AS prescritor_id,
+    orc.nr_receita AS receita_numero,
+    orc.dt_receita AS receita_data,
+    NULL::character varying AS comprador_nome,
+    NULL::character varying AS comprador_doc_numero,
+    NULL::integer AS comprador_doc_tipo,
+    NULL::character varying AS comprador_doc_expedidor,
+    NULL::character varying AS comprador_doc_uf,
+    NULL::character varying AS paciente_cid,
+    NULL::integer AS paciente_idade,
+    NULL::character varying AS paciente_nome,
+    NULL::character varying AS paciente_sexo,
+    0 AS paciente_tipo_idade
+   FROM pdv_vd vd
+     JOIN pdv_vd_it it ON vd.cd_emp = it.cd_emp AND vd.cd_filial = it.cd_filial AND vd.cd_vd = it.cd_vd
+     JOIN est_orc_glb_medico orc ON it.cd_emp = orc.cd_emp::numeric AND it.cd_filial = orc.cd_filial::numeric AND vd.nr_orc = orc.nr_orc::numeric AND it.cd_prod = orc.cd_prod::numeric
+  WHERE COALESCE(it.cd_receita, 0) = 0 AND vd.st_vd > '-1'::integer::numeric
+  ORDER BY 1, 2, 3, 4;
+
+ALTER TABLE public.v_cupomfiscal_item_receita
+  OWNER TO postgres;
+
+  DROP VIEW public.v_cupomfiscal_pbm;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_pbm AS 
+ SELECT vd.cd_emp,
+    vd.cd_filial,
+    vd.dt_vd,
+    vd.dt_cad,
+    vd.cd_cx,
+    vd.cd_vd,
+    vd.nr_ecf,
+    vd.st_vd,
+    vd.cd_conv,
+        CASE
+            WHEN vd.tipo_pbm::numeric > 0::numeric THEN
+            CASE
+                WHEN vd.cd_cli_pbm = 0::numeric THEN ( SELECT rc_cli.cd_cli
+                   FROM rc_cli
+                  WHERE rc_cli.rot_conv_ext = vd.tipo_pbm::numeric AND rc_cli.sts_cli = 0::numeric
+                 LIMIT 1)
+                ELSE vd.cd_cli_pbm
+            END
+            ELSE vd.cd_cli
+        END AS cd_cli_conv,
+    NULL::character varying AS cgc_conv,
+    vd.tipo_pbm,
+        CASE vd.tipo_pbm
+            WHEN 1 THEN 'prevsaude'::character varying
+            WHEN 2 THEN 'vida-link'::character varying
+            WHEN 3 THEN 'e-pharma'::character varying
+            WHEN 4 THEN 'transaction center'::character varying
+            WHEN 5 THEN 'farmacia popular'::character varying
+            WHEN 6 THEN 'funcional card'::character varying
+            ELSE 'outros'::character varying
+        END AS nm_conv,
+    vd.vlr_conv_pbm AS vlr_conv,
+    COALESCE(it.nr_autorizacao_pbm, it.nr_orc_vd_link) AS cd_autorizacao,
+    it.cd_it,
+    it.cd_prod,
+    it.vlr_avista_pbm AS vlr_prod_cli,
+    COALESCE(
+        CASE
+            WHEN it.vlr_reembol_pbm = 0::numeric THEN NULL::numeric
+            ELSE it.vlr_reembol_pbm
+        END,
+        CASE
+            WHEN it.vlr_reembol = 0::numeric THEN NULL::numeric
+            ELSE it.vlr_reembol
+        END) AS vlr_prod_reembolso,
+    it.vlr_conv_pbm AS vlr_prod_conv,
+    COALESCE(vd.flag_consolidado, 0) AS flag_consolidado
+   FROM pdv_vd vd
+     JOIN pdv_vd_it it ON vd.cd_emp = it.cd_emp AND vd.cd_filial = it.cd_filial AND vd.cd_vd = it.cd_vd
+  WHERE vd.st_vd > '-1'::integer::numeric AND vd.tipo_pbm > 0;
+
+ALTER TABLE public.v_cupomfiscal_pbm
+  OWNER TO postgres;
+
+  DROP VIEW public.v_cupomfiscal_tef;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_tef AS 
+ SELECT vd.cd_emp,
+    vd.cd_filial,
+    vd.dt_vd,
+    vd.cd_cx,
+    vd.cd_vd,
+    vd.nr_ecf,
+        CASE
+            WHEN COALESCE(tef.cd_adm_cartao, 0::numeric) > 0::numeric THEN tef.cd_adm_cartao
+            WHEN tef.cd_adm_cartao = 0::numeric AND tef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.cd_adm_cartao
+               FROM rc_adm_cartao
+              WHERE rc_adm_cartao.cd_emp = tef.cd_emp AND rc_adm_cartao.tp_adm = tef.tp_adm::numeric AND rc_adm_cartao.parc = tef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+             LIMIT 1)
+            ELSE NULL::numeric
+        END AS cd_conv,
+        CASE
+            WHEN COALESCE(tef.cd_adm_cartao, 0::numeric) > 0::numeric THEN adm.nm_usual
+            WHEN tef.cd_adm_cartao = 0::numeric AND tef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.nm_usual
+               FROM rc_adm_cartao
+              WHERE rc_adm_cartao.cd_emp = tef.cd_emp AND rc_adm_cartao.tp_adm = tef.tp_adm::numeric AND rc_adm_cartao.parc = tef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+             LIMIT 1)
+            ELSE NULL::character varying
+        END AS nm_conv,
+        CASE adm.tp_adm
+            WHEN 6 THEN 1
+            ELSE 0
+        END AS tp_cartao,
+    tef.vl_cartao AS vlr_cartao,
+    tef.vl_saque_cartao AS vlr_saque,
+        CASE adm.tp_adm
+            WHEN 6 THEN adm.parc
+            ELSE tef.qt_parc::numeric
+        END AS qt_parc,
+    tef.cod_rede,
+    tef.cod_bandeira,
+    tef.cod_modalidade,
+        CASE
+            WHEN COALESCE(tef.nsu_tef, 0::numeric) > 0::numeric AND tef.nsu_tef <> 1::numeric THEN tef.nsu_tef
+            WHEN tef.nsu_tef = 1::numeric THEN tef.cd_trn_tef
+            WHEN COALESCE(tef.nsu_tef, 0::numeric) = 0::numeric THEN tef.cd_trn_tef
+            ELSE NULL::numeric
+        END AS nr_transacao,
+        CASE
+            WHEN COALESCE(tef.nr_autorizacao, '0'::character varying)::text > '0'::text AND tef.nr_autorizacao::text <> '1'::text THEN tef.nr_autorizacao
+            WHEN tef.nr_autorizacao::text = '1'::text THEN tef.cd_trn_tef::character varying
+            WHEN tef.nr_autorizacao::text = '0'::text THEN tef.cd_trn_tef::character varying
+            ELSE NULL::character varying
+        END AS nr_autorizacao,
+        CASE
+            WHEN tef.gerenciador_tef = 1 THEN 'scope'::text
+            WHEN tef.trn_pos = 1 THEN 'pos'::text
+            ELSE 'sitef'::text
+        END AS tef_gateway,
+    cred.cd_parc,
+    cred.dt_parc,
+    cred.vl_parc AS vlr_parc,
+    vd.flag_consolidado
+   FROM pdv_vd vd
+     JOIN pdv_vd_tef tef ON vd.cd_emp = tef.cd_emp AND vd.cd_filial = tef.cd_filial AND vd.cd_vd = tef.cd_vd
+     LEFT JOIN rc_adm_cartao adm ON tef.cd_emp = adm.cd_emp AND tef.cd_adm_cartao = adm.cd_adm_cartao
+     LEFT JOIN pdv_vd_cred cred ON vd.cd_emp = cred.cd_emp AND vd.cd_filial = cred.cd_filial AND vd.cd_vd = cred.cd_vd
+  WHERE vd.st_vd > '-1'::integer::numeric AND COALESCE(vd.vlr_cartao, 0::numeric) <> 0::numeric;
+
+ALTER TABLE public.v_cupomfiscal_tef
+  OWNER TO postgres;
+
+  DROP VIEW public.v_cupomfiscal_vale_compra;
+
+CREATE OR REPLACE VIEW public.v_cupomfiscal_vale_compra AS 
+ SELECT pdv_vd.cd_emp,
+    pdv_vd.cd_filial,
+    pdv_vd.cd_cx,
+    pdv_vd.cd_vd,
+    pdv_vd.nr_ecf,
+    pdv_vd.st_vd,
+    pdv_vd.dt_vd,
+    pdv_vd.vlr_tickets,
+    COALESCE(pdv_vd.flag_consolidado, 0) AS flag_consolidado,
+    pdv_vd_rc_cli_fideli_vale_compra.cd_ctr_vale_cp,
+    pdv_vd_rc_cli_fideli_vale_compra.vlr_vale_cp
+   FROM pdv_vd
+     JOIN pdv_vd_rc_cli_fideli_vale_compra ON pdv_vd.cd_emp = pdv_vd_rc_cli_fideli_vale_compra.cd_emp AND pdv_vd.cd_filial = pdv_vd_rc_cli_fideli_vale_compra.cd_filial AND pdv_vd.cd_vd = pdv_vd_rc_cli_fideli_vale_compra.cd_vd
+  WHERE pdv_vd.st_vd > '-1'::integer::numeric;
+
+ALTER TABLE public.v_cupomfiscal_vale_compra
+  OWNER TO postgres;
+
+  DROP VIEW public.v_cupomnaofiscal;
+
+CREATE OR REPLACE VIEW public.v_cupomnaofiscal AS 
+ SELECT cupom.cd_emp,
+    cupom.cd_filial,
+    cupom.cd_cx,
+    cupom.dt_cupom,
+    cupom.dt_cad,
+    cupom.hr_cupom,
+    cupom.tp_cupom_nao_fiscal AS tp_cupom,
+    cupom.cd_mov,
+    cupom.cd_ctr,
+    cupom.nr_coo,
+    cupom.st_cupom,
+    cupom.cont_cupom_fisc AS contador_cupom_fiscal,
+    cupom.cd_mov AS codigo_movimento,
+    filial.cgc AS cgc_filial,
+    filial.nm_fant AS nm_filial,
+    cupom.vlr_to_cupom AS vlr_tot_cupom,
+    cupom.vlr_dinh,
+    cupom.vlr_cartao,
+    cupom.vlr_chqs_a_vista + cupom.vlr_chqs_a_prz AS vlr_chqs,
+    cupom.cd_oper_cel,
+    cupom.nr_cel_recarga,
+    cupom.vlr_recarga_cel,
+    cupom.nm_oper_cel,
+    cupom.nr_serie_imp AS nr_serie_ecf,
+    cupom.vs_pdv AS versao_pdv,
+    cupom.vs_pdv_rc AS versao_pdv_rc,
+    operador.cd_usu AS cd_operador,
+    operador.nm_usu AS nm_operador,
+    NULLIF(COALESCE(cupom.vlr_dinh, 0::numeric) <> 0::numeric, false) AS contem_dinheiro,
+    NULLIF(COALESCE(cupom.vlr_recarga_cel, 0::numeric) <> 0::numeric, false) AS contem_recarga_cel,
+    NULLIF(cupom.st_cupom <> 0::numeric, false) AS is_cancelado,
+    COALESCE(cupom.flag_consolidado, 0) AS flag_consolidado,
+    cupom.tp_cupom_nao_fiscal = 0::numeric AS is_fatura,
+    cupom.tp_cupom_nao_fiscal = 1::numeric AS is_doacao,
+    cupom.tp_cupom_nao_fiscal = 2::numeric AS is_diversos,
+    cupom.tp_cupom_nao_fiscal = 3::numeric AS is_recarga,
+    cupom.cd_ctr AS doacao_id,
+    entidade.cd_entid AS doacao_favor_id,
+    entidade.nm_entid AS doacao_favor_nome,
+    COALESCE(fatura.cd_ctr_pgto, parcela.cd_ctr_pgto) AS fatura_rec_id,
+    fatura.cd_rc_deb AS fatura_id,
+    fatura.vlr_sld_dp AS fatura_vlr,
+    fatura.vlr_sld_dp AS fatura_vlr_sld,
+    fatura.vlr_min_pgto AS fatura_vlr_min,
+    fatura.vlr_pago AS fatura_vlr_cred,
+    parcela.cd_ctr_parc AS parcela_id,
+    parcela.vlr_parc AS parcela_vlr,
+    parcela.vlr_pago AS parcela_vlr_cred,
+    diversos.dt_vencto AS diversos_venc,
+        CASE
+            WHEN diversos.cd_recb_pdv <> 0 THEN diversos.cd_recb_pdv
+            ELSE 0::bigint
+        END AS diversos_id,
+    diversos.ident_recb_pdv AS diversos_codigo,
+    0 AS st_vd,
+    cupom.hash_protocolo,
+    cupom.st_pend_estorno,
+    fatura.st_paga AS fatura_st_paga,
+    fatura.tp_pgto_offline AS fatura_offline,
+    fatura.vlrjuros AS fatura_vlr_juro,
+    fatura.vlrdesconto AS fatura_vlr_desc,
+    fatura.nrfatura AS fatura_nr_fatura,
+    fatura.dt_vencto AS fatura_dt_vencto,
+    parcela.st_paga AS parcela_st_paga,
+    parcela.tp_pgto_offline AS parcela_offline,
+    COALESCE(cupom.obs_cupom, ''::character varying) AS obs_cupom,
+    COALESCE(cupom.cd_mt_sangria, 0::numeric) AS "coalesce",
+    cupom.cd_mt_sangria
+   FROM pdv_cupom_nao_fiscal cupom
+     LEFT JOIN prc_filial filial ON cupom.cd_emp = filial.cd_emp AND cupom.cd_filial = filial.cd_filial
+     LEFT JOIN pdv_cupom_nao_fiscal_rec_fatura fatura ON cupom.cd_emp = fatura.cd_emp AND cupom.cd_filial = fatura.cd_filial AND cupom.cd_cx = fatura.cd_cx AND cupom.cd_ctr = fatura.cd_ctr AND fatura.st_paga = 1::numeric
+     LEFT JOIN pdv_cupom_nao_fiscal_rec_parc_cred parcela ON cupom.cd_emp = parcela.cd_emp AND cupom.cd_filial = parcela.cd_filial AND cupom.cd_cx = parcela.cd_cx AND cupom.cd_ctr = parcela.cd_ctr
+     LEFT JOIN pdv_cupom_nao_fiscal_est_recb_pdv diversos ON cupom.cd_emp = diversos.cd_emp AND cupom.cd_filial = diversos.cd_filial AND cupom.cd_cx = diversos.cd_cx AND cupom.cd_ctr = diversos.cd_ctr
+     LEFT JOIN pdv_cupom_nao_fiscal_est_entid_doacao doacao ON cupom.cd_emp = doacao.cd_emp AND cupom.cd_filial = doacao.cd_filial AND cupom.cd_cx = doacao.cd_cx AND cupom.cd_ctr = doacao.cd_ctr
+     LEFT JOIN est_entidade_doacao entidade ON doacao.cd_emp = entidade.cd_emp::numeric AND doacao.cd_entid = entidade.cd_entid
+     LEFT JOIN glb_usu operador ON cupom.cd_usu = operador.cd_usu
+  WHERE cupom.st_cupom >= 0::numeric;
+
+ALTER TABLE public.v_cupomnaofiscal
+  OWNER TO postgres;
+
+  
+  DROP VIEW public.v_cupomnaofiscal_cheque;
+
+CREATE OR REPLACE VIEW public.v_cupomnaofiscal_cheque AS 
+ SELECT cupom.cd_emp,
+    cupom.cd_filial,
+    cupom.dt_cupom,
+    cupom.dt_cad,
+    cupom.cd_cx,
+    cupom.cd_ctr,
+    cupom.nr_coo,
+    0 AS st_vd,
+    chq.cd_bc_chq AS cd_bc,
+    NULL::character varying AS nm_bc,
+    chq.nr_ord,
+    chq.nr_chq,
+    chq.ano_chq,
+    chq.vlr_chq,
+    cupom.dt_cupom AS dt_emi,
+    chq.dt_vencto,
+    chq.ag_chq,
+    chq.cpf_cgc_emi AS cgc_emi,
+    chq.nm_emi,
+    chq.fone_emi,
+    chq.nr_cnt_chq,
+    chq.aut_chq,
+    chq.comp_chq,
+    chq.c1_chq,
+    chq.c2_chq,
+    chq.sr_chq AS c3_chq,
+    chq.cmc7_chq,
+    chq.mes_ano_cnt_chq,
+    COALESCE(cupom.flag_consolidado, 0) AS flag_consolidado
+   FROM pdv_cupom_nao_fiscal cupom
+     JOIN pdv_cupom_nao_fiscal_chqs chq ON cupom.cd_emp = chq.cd_emp AND cupom.cd_filial = chq.cd_filial AND cupom.cd_ctr = chq.cd_ctr AND cupom.cd_cx = chq.cd_cx;
+
+ALTER TABLE public.v_cupomnaofiscal_cheque
+  OWNER TO postgres;
+
+  
+  DROP VIEW public.v_cupomnaofiscal_tef;
+
+CREATE OR REPLACE VIEW public.v_cupomnaofiscal_tef AS 
+ SELECT cupom.cd_emp,
+    cupom.cd_filial,
+    cupom.dt_cupom,
+    cupom.dt_cad,
+    cupom.cd_cx,
+    cupom.cd_ctr,
+    cupom.nr_coo,
+    0 AS st_vd,
+    cupomtef.cd_trn_tef AS cd_recto_tef,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN
+            CASE
+                WHEN COALESCE(cupomtef.cd_adm_cartao, 0::numeric) > 0::numeric THEN cupomtef.cd_adm_cartao
+                WHEN cupomtef.cd_adm_cartao = 0::numeric AND cupomtef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.cd_adm_cartao
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.cd_emp = cupomtef.cd_emp AND rc_adm_cartao.tp_adm = cupomtef.tp_adm::numeric AND rc_adm_cartao.parc = cupomtef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+                 LIMIT 1)
+                WHEN cupomtef.cd_adm_cartao = 0::numeric THEN ( SELECT rc_adm_cartao.cd_adm_cartao
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.nm_usual::text ~~* '%OPERADORA NAO CLASSIFICADA%'::text
+                 LIMIT 1)
+                ELSE NULL::numeric
+            END
+            ELSE
+            CASE
+                WHEN COALESCE(pdvtef.cd_adm_cartao, 0::numeric) > 0::numeric THEN
+                CASE
+                    WHEN COALESCE(pdvtef.ds_bandeira, ''::character varying)::text = ''::text AND pdvtef.cd_adm_cartao = 0::numeric THEN ( SELECT rc_adm_cartao.cd_adm_cartao
+                       FROM rc_adm_cartao
+                      WHERE rc_adm_cartao.nm_usual::text ~~* '%OPERADORA NAO CLASSIFICADA%'::text
+                     LIMIT 1)
+                    ELSE pdvtef.cd_adm_cartao
+                END
+                WHEN pdvtef.cd_adm_cartao = 0::numeric AND cupomtef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.cd_adm_cartao
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.cd_emp = cupomtef.cd_emp AND rc_adm_cartao.tp_adm = cupomtef.tp_adm::numeric AND rc_adm_cartao.parc = cupomtef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+                 LIMIT 1)
+                WHEN pdvtef.cd_adm_cartao = 0::numeric THEN ( SELECT rc_adm_cartao.cd_adm_cartao
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.nm_usual::text ~~* '%OPERADORA NAO CLASSIFICADA%'::text
+                 LIMIT 1)
+                ELSE NULL::numeric
+            END
+        END AS cd_conv,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN
+            CASE
+                WHEN COALESCE(cupomtef.cd_adm_cartao, 0::numeric) > 0::numeric THEN adm.nm_usual
+                WHEN COALESCE(cupomtef.cd_adm_cartao, 0::numeric) = 0::numeric AND cupomtef.tp_adm <> 6 THEN cupomtef.ds_bandeira
+                WHEN cupomtef.cd_adm_cartao = 0::numeric AND cupomtef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.nm_usual
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.cd_emp = cupomtef.cd_emp AND rc_adm_cartao.tp_adm = cupomtef.tp_adm::numeric AND rc_adm_cartao.parc = cupomtef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+                 LIMIT 1)
+                ELSE NULL::character varying
+            END
+            ELSE
+            CASE
+                WHEN COALESCE(pdvtef.cd_adm_cartao, 0::numeric) > 0::numeric THEN
+                CASE
+                    WHEN COALESCE(pdvtef.ds_bandeira, ''::character varying)::text = ''::text AND pdvtef.cd_adm_cartao = 0::numeric THEN ( SELECT rc_adm_cartao.nm_usual
+                       FROM rc_adm_cartao
+                      WHERE rc_adm_cartao.nm_usual::text ~~* '%OPERADORA NAO CLASSIFICADA%'::text
+                     LIMIT 1)
+                    ELSE ( SELECT rc_adm_cartao.nm_usual
+                       FROM rc_adm_cartao
+                      WHERE rc_adm_cartao.cd_emp = pdvtef.cd_emp AND rc_adm_cartao.cd_adm_cartao = pdvtef.cd_adm_cartao)
+                END
+                WHEN pdvtef.cd_adm_cartao = 0::numeric AND cupomtef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.nm_usual
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.cd_emp = cupomtef.cd_emp AND rc_adm_cartao.tp_adm = cupomtef.tp_adm::numeric AND rc_adm_cartao.parc = cupomtef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+                 LIMIT 1)
+                WHEN pdvtef.cd_adm_cartao = 0::numeric THEN COALESCE(pdvtef.ds_bandeira, 'OPERADORA NAO CLASSIFICADA'::character varying)
+                ELSE NULL::character varying
+            END
+        END AS nm_conv,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN
+            CASE
+                WHEN COALESCE(cupomtef.cd_adm_cartao, 0::numeric) > 0::numeric THEN adm.nm_usual
+                WHEN COALESCE(cupomtef.cd_adm_cartao, 0::numeric) = 0::numeric AND cupomtef.tp_adm <> 6 THEN cupomtef.ds_bandeira
+                WHEN cupomtef.cd_adm_cartao = 0::numeric AND cupomtef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.nm_usual
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.cd_emp = cupomtef.cd_emp AND rc_adm_cartao.tp_adm = cupomtef.tp_adm::numeric AND rc_adm_cartao.parc = cupomtef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+                 LIMIT 1)
+                ELSE NULL::character varying
+            END
+            ELSE
+            CASE
+                WHEN COALESCE(pdvtef.cd_adm_cartao, 0::numeric) > 0::numeric THEN
+                CASE
+                    WHEN COALESCE(pdvtef.ds_bandeira, ''::character varying)::text = ''::text AND pdvtef.cd_adm_cartao = 0::numeric THEN ( SELECT rc_adm_cartao.nm_usual
+                       FROM rc_adm_cartao
+                      WHERE rc_adm_cartao.nm_usual::text ~~* '%OPERADORA NAO CLASSIFICADA%'::text
+                     LIMIT 1)
+                    ELSE ( SELECT rc_adm_cartao.nm_usual
+                       FROM rc_adm_cartao
+                      WHERE rc_adm_cartao.cd_emp = pdvtef.cd_emp AND rc_adm_cartao.cd_adm_cartao = pdvtef.cd_adm_cartao)
+                END
+                WHEN pdvtef.cd_adm_cartao = 0::numeric AND cupomtef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.nm_usual
+                   FROM rc_adm_cartao
+                  WHERE rc_adm_cartao.cd_emp = cupomtef.cd_emp AND rc_adm_cartao.tp_adm = cupomtef.tp_adm::numeric AND rc_adm_cartao.parc = cupomtef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
+                 LIMIT 1)
+                WHEN pdvtef.cd_adm_cartao = 0::numeric THEN COALESCE(pdvtef.ds_bandeira, 'OPERADORA NAO CLASSIFICADA'::character varying)
+                ELSE NULL::character varying
+            END
+        END AS bandeira,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN cupomtef.vl_saque_cartao
+            ELSE pdvtef.vl_saque_cartao
+        END AS vlr_saque,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN COALESCE(cupomtef.qt_parc, 1)
+            ELSE
+            CASE
+                WHEN pdvtef.qt_parc > 0 THEN pdvtef.qt_parc
+                ELSE 1
+            END
+        END AS qt_parc,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN cupomtef.cod_rede
+            ELSE pdvtef.cod_rede
+        END AS cod_rede,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN cupomtef.cod_bandeira
+            ELSE pdvtef.cod_bandeira
+        END AS cod_bandeira,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN
+            CASE
+                WHEN COALESCE(cupomtef.cod_modalidade, '0'::character varying)::text = '0'::text OR cupomtef.cod_modalidade::text = 0::text THEN '9800'::character varying
+                ELSE cupomtef.cod_modalidade
+            END
+            ELSE
+            CASE
+                WHEN COALESCE(pdvtef.cod_modalidade, '0'::character varying)::text = '0'::text OR pdvtef.cod_modalidade::text = 0::text THEN '9800'::character varying
+                ELSE pdvtef.cod_modalidade
+            END
+        END AS cod_modalidade,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN "substring"(cupomtef.nsu_tef::text, 0, 9)::numeric
+            ELSE "substring"(pdvtef.nsu_sitef::text, 0, 9)::numeric
+        END AS nr_transacao,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN "substring"(cupomtef.nr_autorizacao::text, 0, 16)
+            ELSE "substring"(pdvtef.nr_autorizacao::text, 0, 16)
+        END AS nr_autorizacao,
+        CASE
+            WHEN cupomtef.gerenciador_tef = 1 THEN 'SCOPE'::text
+            WHEN cupomtef.trn_pos = 1 THEN 'POS'::text
+            ELSE 'SITEF'::text
+        END AS tef_gateway,
+    COALESCE(cupom.flag_consolidado, 0) AS flag_consolidado,
+        CASE
+            WHEN cupomtef.vl_cartao > 0::numeric THEN
+            CASE
+                WHEN pdvtef.cd_adm_cartao > 0::numeric AND cupomtef.vl_cartao > 0::numeric THEN cupomtef.vl_cartao
+                ELSE
+                CASE
+                    WHEN COALESCE(cupomtef.cod_modalidade, '9800'::character varying)::text = '9800'::text OR cupomtef.cod_modalidade::text = 0::text THEN 0.00
+                    ELSE cupomtef.vl_cartao
+                END
+            END
+            ELSE
+            CASE
+                WHEN pdvtef.cd_adm_cartao > 0::numeric AND pdvtef.vl_cartao > 0::numeric THEN pdvtef.vl_cartao
+                ELSE
+                CASE
+                    WHEN COALESCE(pdvtef.cod_modalidade, '9800'::character varying)::text = '9800'::text OR pdvtef.cod_modalidade::text = 0::text THEN 0.00
+                    ELSE pdvtef.vl_cartao
+                END
+            END
+        END AS vlr_cartao
+   FROM pdv_cupom_nao_fiscal cupom
+     JOIN pdv_cupom_nao_fiscal_tef cupomtef ON cupom.cd_emp = cupomtef.cd_emp AND cupom.cd_filial = cupomtef.cd_filial AND cupom.cd_cx = cupomtef.cd_cx AND cupom.cd_ctr = cupomtef.cd_ctr
+     LEFT JOIN rc_adm_cartao adm ON cupomtef.cd_emp = adm.cd_emp AND cupomtef.cd_adm_cartao = adm.cd_adm_cartao
+     LEFT JOIN pdv_recbto_tef pdvtef ON cupomtef.cd_emp = pdvtef.cd_emp AND cupomtef.cd_filial = pdvtef.cd_filial AND cupomtef.cd_cx = pdvtef.cd_cx AND cupomtef.cd_recto_tef = pdvtef.cd_recto_tef
+  WHERE cupom.vlr_cartao > 0::numeric AND cupom.st_cupom >= 0::numeric;
+
+ALTER TABLE public.v_cupomnaofiscal_tef
+  OWNER TO postgres;
+
+  
+  DROP VIEW public.v_orcamento;
+
+CREATE OR REPLACE VIEW public.v_orcamento AS 
+ SELECT orc.cd_emp,
+    orc.cd_filial,
+    orc.cd_orc,
+    orc.dt_emi,
+    orc.hr_emi,
+    orc.nr_ped_televd AS nr_pedido,
+    orc.vlr_tot,
+        CASE
+            WHEN COALESCE(orc.cd_conv::numeric, 0::numeric) <> 0::numeric THEN 1
+            ELSE NULL::integer
+        END AS contem_convenio,
+    COALESCE(cli_conv.ds_conv, ''::character varying) AS ds_conv,
+        CASE
+            WHEN COALESCE(orc.tipo_pbm::numeric, '-1'::integer::numeric) <> '-1'::integer::numeric THEN 1
+            ELSE NULL::integer
+        END AS contem_pbm,
+        CASE
+            WHEN orc.tp_orc_entg = 1::numeric THEN 1
+            ELSE NULL::integer
+        END AS contem_entrega,
+        CASE
+            WHEN receita.nr_orc IS NOT NULL THEN 1
+            ELSE NULL::integer
+        END AS contem_receita,
+    COALESCE(receita.cd_medico_rec, 0) AS medico_id,
+    medico.nm_medico AS medico_nm,
+    medico.cd_tp_doc AS medico_tp_doc,
+    medico.nr_doc AS medico_nr_doc,
+    medico.uf_doc AS medico_uf_doc,
+    COALESCE(receita.nr_receita::numeric, 0::bigint::numeric) AS numero_receita,
+    COALESCE(receita.cd_receita, 0) AS codigo_receita,
+    receita.dt_receita,
+    receita.tp_capt_receita AS tipo_captacao_receita,
+    orc.cd_cli,
+    orc.nm_cli,
+    cli.cgc_cpf AS cli_cgccpf,
+    orc.nr_cartao_fidelidade AS nr_cartao_cli,
+    orc.fone_cli,
+    orc.nm_comprador,
+    orc.tp_orc,
+    orc.tipo_prazo_pgto AS tp_prazo_pgto,
+    orc.cd_frm_pgto AS cd_forma_pgto,
+    orc.orig_orc AS origem_orc,
+    orc.vd_troca_fidel,
+    orc.sts_orc,
+    orc.obs,
+    orc.dados_adicionais,
+    orc.offline,
+    COALESCE(orc.flag_consolidado, 0) AS flag_consolidado,
+    cpl.cd_prod,
+    NULL::character varying AS ds_prod,
+    cpl.qt AS qt_it,
+    cpl.vlr_it,
+    cpl.vlr_tot_it,
+    cpl.vlr_desc,
+    COALESCE(cpl.perc_desc, 0::numeric) AS "coalesce",
+    cpl.cd_vend,
+    NULL::character varying AS nm_vend,
+    orc.cd_vend_lib AS vend_lib,
+    NULL::character varying AS vend_lib_nm,
+    cpl.pr_tab AS vlr_it_tab,
+    cpl.oferta AS is_oferta_it,
+    cpl.perc_desc_cad,
+    cpl.perc_desc_fix,
+    cpl.vlr_desc_fix,
+    cpl.tipo_desconto AS tp_desc,
+    cpl.qtde_ponto_fidel AS qt_pontos_fidel,
+    cpl.vlr_economia,
+    cpl.vlr_desc_verba,
+    cpl.perc_desc_verba,
+    cpl.cd_vend_verba,
+    NULL::character varying AS nm_vend_verba,
+    cpl.libera_vd_conv,
+    cpl.vlr_custo_semaforo,
+    cpl.qt_est,
+    cpl.cd_grp AS cd_grupo_comissao,
+    cpl.nr_protocolo_manipulado,
+    cpl.perc_desconto_pos_pbm,
+    desconto_concorrente.cd_concor AS cd_concorrente,
+    desconto_concorrente.vlr_concor AS vlr_concorrente,
+        CASE
+            WHEN COALESCE(est_cancel.cd_mt_cancel_orc, 0) > 0 THEN true
+            ELSE false
+        END AS orcamento_cancel,
+    COALESCE(est_cancel.cd_mt_cancel_orc, 0) AS codigomotivocancel,
+    est_cancel.desc_mt_cancel AS descricaomotivocancel,
+    lote.cd_lote,
+    lote.qtde_lote,
+    receita.nm_comprador AS nm_comprador_rec,
+    receita.idade AS idade_rec,
+    receita.nm_paciente AS nm_paciente_rec,
+    receita.receita_tipo AS receita_tipo_rec,
+    COALESCE(receita.cid, 0) AS cid_rec,
+    receita.uf AS uf_rec,
+    receita.nr_doc_cli AS nr_doc_cli_rec,
+    receita.tipo_documento AS tipo_documento_rec,
+    cpl.venda_dependente,
+    cpl.cd_it,
+    COALESCE(cpl.perc_desc_diff, 0::numeric) AS perc_desc_diff
+   FROM est_orc orc
+     JOIN est_orc_cpl cpl ON orc.cd_emp::numeric = cpl.cd_emp AND orc.cd_filial::numeric = cpl.cd_filial AND orc.cd_orc::numeric = cpl.cd_orc
+     JOIN rc_cli cli ON orc.cd_emp::numeric = cli.cd_emp AND orc.cd_cli::numeric = cli.cd_cli
+     LEFT JOIN rc_cli_conv cli_conv ON orc.cd_conv::numeric = cli_conv.cd_conv AND orc.cd_emp::numeric = cli_conv.cd_emp
+     LEFT JOIN est_orc_glb_medico receita ON cpl.cd_emp = receita.cd_emp::numeric AND cpl.cd_filial = receita.cd_filial::numeric AND cpl.cd_orc = receita.nr_orc::numeric AND cpl.cd_prod = receita.cd_prod::numeric
+     LEFT JOIN glb_medicos medico ON cpl.cd_emp = medico.cd_emp::numeric AND receita.cd_medico_rec = medico.cd_ctr
+     LEFT JOIN est_orc_cpl_concor desconto_concorrente ON cpl.cd_emp = desconto_concorrente.cd_emp::numeric AND cpl.cd_filial = desconto_concorrente.cd_filial::numeric AND cpl.cd_orc = desconto_concorrente.nr_orc::numeric
+     LEFT JOIN est_orc_mt_cancel est_cancel ON est_cancel.cd_emp::numeric = orc.cd_emp::numeric AND est_cancel.cd_filial::numeric = orc.cd_filial::numeric AND est_cancel.cd_orc::numeric = orc.cd_orc::numeric
+     LEFT JOIN est_orc_cpl_lote lote ON cpl.cd_emp = lote.cd_emp AND cpl.cd_filial = lote.cd_filial AND cpl.cd_orc = lote.cd_orc AND cpl.cd_prod = lote.cd_prod;
+
+ALTER TABLE public.v_orcamento
+  OWNER TO postgres;
