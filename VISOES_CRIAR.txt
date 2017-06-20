@@ -1,7 +1,0 @@
-v_cupomfiscal
-v_cupomfiscal_item
-v_cupomfiscal_cartao ==> cartões
-v_cupomfiscal_pbm
-v_cupomnaofiscal
-v_cupomnaofiscal_tef 
-v_pdv_consld_vd ==> leitura z
