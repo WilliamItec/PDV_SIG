@@ -64,7 +64,7 @@ $$
 create trigger tg_pdv_vd_flag_consolidado_insert AFTER INSERT on `POS_NOTAS_TOTAIS`
 for each row
 begin
-    if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS = 'C' 
+    if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') 
     then
         insert into pdv_vd
         (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
@@ -82,7 +82,7 @@ $$
 create trigger tg_pdv_vd_flag_consolidado_update AFTER UPDATE on `POS_NOTAS_TOTAIS`
 for each row
 begin
-if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS = 'C' 
+if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') 
 then
     insert into pdv_vd
     (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
