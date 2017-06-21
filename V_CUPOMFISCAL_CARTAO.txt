@@ -1,87 +1,4 @@
-CREATE VIEW V_CUPOMFISCAL_CARTAO
-AS 
-CREATE OR REPLACE VIEW public.v_cupomfiscal_cartao AS 
- SELECT 
-	1 AS CD_EMP,
-    SIG_POS_dbo.POS_NOTAS_TOTAIS.ORIGEM as CD_FILIAL,
-    SIG_POS_dbo.POS_NOTAS_TOTAIS.DATA_CAIXA as DT_VD,
-    COALESCE(vd.dt_cad, vd.dt_vd) AS dt_cad,
-    COALESCE(vd.dt_cad, vd.hr_vd) AS hr_vd,
-    vd.cd_cx,
-    vd.cd_vd,
-    vd.nr_ecf,
-    vd.st_vd,
-        CASE
-            WHEN COALESCE(tef.cd_adm_cartao, 0::numeric) > 0::numeric THEN tef.cd_adm_cartao
-            WHEN tef.cd_adm_cartao = 0::numeric AND tef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.cd_adm_cartao
-               FROM rc_adm_cartao
-              WHERE rc_adm_cartao.cd_emp = tef.cd_emp AND rc_adm_cartao.tp_adm = tef.tp_adm::numeric AND rc_adm_cartao.parc = tef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
-             LIMIT 1)
-            ELSE NULL::numeric
-        END AS cd_conv,
-        CASE
-            WHEN COALESCE(tef.cd_adm_cartao, 0::numeric) > 0::numeric THEN adm.nm_usual
-            WHEN tef.cd_adm_cartao = 0::numeric AND tef.tp_adm = 6 THEN ( SELECT rc_adm_cartao.nm_usual
-               FROM rc_adm_cartao
-              WHERE rc_adm_cartao.cd_emp = tef.cd_emp AND rc_adm_cartao.tp_adm = tef.tp_adm::numeric AND rc_adm_cartao.parc = tef.qt_parc::numeric AND rc_adm_cartao.sts_adm = 0
-             LIMIT 1)
-            ELSE NULL::character varying
-        END AS nm_conv,
-    tef.vl_cartao AS vlr_cartao,
-    tef.vl_saque_cartao AS vlr_saque,
-        CASE
-            WHEN tef.qt_parc > 0 THEN tef.qt_parc::numeric
-            ELSE adm.parc
-        END AS qt_parc,
-    tef.cod_rede,
-    tef.cod_bandeira,
-        CASE
-            WHEN tef.cod_modalidade::text = ''::text THEN '0'::character varying
-            ELSE tef.cod_modalidade
-        END AS cod_modalidade,
-    tef.tp_adm AS tp_administradora,
-        CASE
-            WHEN COALESCE(
-            CASE
-                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
-                ELSE tef.nsu_tef
-            END, 0::numeric) > 0::numeric AND
-            CASE
-                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
-                ELSE tef.nsu_tef
-            END <> 1::numeric THEN tef.nsu_tef
-            WHEN
-            CASE
-                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
-                ELSE tef.nsu_tef
-            END = 1::numeric THEN tef.cd_trn_tef
-            WHEN COALESCE(
-            CASE
-                WHEN tef.nsu_tef = 0::numeric THEN NULL::numeric
-                ELSE tef.nsu_tef
-            END, 0::numeric) = 0::numeric THEN tef.cd_trn_tef
-            ELSE NULL::numeric
-        END AS nr_transacao,
-        CASE
-            WHEN COALESCE(tef.nr_autorizacao, '0'::character varying)::text > '0'::text AND tef.nr_autorizacao::text <> '1'::text THEN tef.nr_autorizacao
-            WHEN tef.nr_autorizacao::text = '1'::text THEN tef.cd_trn_tef::character varying
-            WHEN tef.nr_autorizacao::text = '0'::text THEN tef.cd_trn_tef::character varying
-            ELSE NULL::character varying
-        END AS nr_autorizacao,
-    tef.ds_bandeira AS bandeira,
-    COALESCE(tef.nr_estabelecimento, ''::character varying) AS nr_estabelecimento,
-    COALESCE(tef.nr_comprovante, ''::character varying) AS nr_comprovante,
-        CASE
-            WHEN tef.gerenciador_tef = 1 THEN 'SCOPE'::character varying
-            WHEN tef.trn_pos = 1 THEN 'POS'::character varying
-            ELSE 'SITEF'::character varying
-        END AS tef_gateway,
-    COALESCE(vd.flag_consolidado, 0) AS flag_consolidado
-   FROM pdv_vd vd
-     JOIN pdv_vd_tef tef ON vd.cd_emp = tef.cd_emp AND vd.cd_filial = tef.cd_filial AND vd.cd_vd = tef.cd_vd
-     LEFT JOIN rc_adm_cartao adm ON tef.cd_emp = adm.cd_emp AND tef.cd_adm_cartao = adm.cd_adm_cartao
-  WHERE tef.vl_cartao > 0::numeric AND (adm.tp_adm <> 6::numeric OR tef.cd_adm_cartao = 0::numeric);
-=================
+CREATE VIEW v_cupomfiscal_cartao AS 
  SELECT 
 	1 AS CD_EMP,
     SIG_POS_dbo.POS_NOTAS_TOTAIS.ORIGEM as CD_FILIAL,
@@ -89,53 +6,29 @@ CREATE OR REPLACE VIEW public.v_cupomfiscal_cartao AS
     SIG_POS_dbo.POS_NOTAS_TOTAIS.DATA_CAIXA AS DT_CAD,
     SIG_POS_dbo.POS_NOTAS_TOTAIS.HORA_OPERACAO AS HR_VD,
     SIG_POS_dbo.POS_NOTAS_TOTAIS.ID_ESTACAO as CD_CX,
-    SIG_POS_dbo.POS_NOTAS_TOTAIS.ID_NOTA AS CD_VD,
+    SIG_POS_dbo.POS_NOTAS_TOTAIS.ID_NOTA AS CD_VD, 
     SIG_POS_dbo.POS_NOTAS_TOTAIS.ID_NOTA AS NR_ECF,
     0 AS ST_VD,
-    1 AS CD_IT,
-    SIG_POS_dbo.POS_NOTAS_DETALHES.P_CODIGO AS CD_PROD,
-    0 AS CD_MEDICO_REC,
-    '' AS DS_PROD,
-    NULL AS CD_BARRA,
-    SIG_POS_dbo.POS_NOTAS_DETALHES.QTD AS QT_IT,
-    SIG_POS_dbo.POS_NOTAS_DETALHES.VALOR AS VLR_IT,
-    (SIG_POS_dbo.POS_NOTAS_DETALHES.QTD * SIG_POS_dbo.POS_NOTAS_DETALHES.VALOR) AS TOT_IT,
-    (CASE WHEN SIG_POS_dbo.POS_NOTAS_DETALHES.STATUS='C' THEN
-		1
-	ELSE
-		0
-	END) AS ST_IT,
-    0 AS TIPO_DESCONTO,
-    0 AS TX_DESC,
-    0 AS VLR_DESC_VERBA,
-    0 AS VLR_DESC_RATEIO,
-    0 AS CD_TRIB_FC,
-    ((SIG_POS_dbo.POS_NOTAS_DETALHES.VALOR_ICMS * 100)/SIG_POS_dbo.POS_NOTAS_DETALHES.VALOR) AS TX_ICMS_IT,
-    0 AS TX_RED_IT,
-    0 AS CD_VEND,
-    NULL AS NM_VEND,
-    0 AS CD_VEND_VERBA,
-    '' AS NM_VEND_VERBA,
-    0 AS CD_USU_CANCEL,
-    NULL AS NM_USU_CANCEL,
-    ROUND(SIG_POS_dbo.POS_NOTAS_TOTAIS.CREDITO_OPERACAO,2) AS QT_PONTOS_FIDEL,
-    0 AS CD_GRUPO_COMISSAO,
-    (CASE WHEN SIG_POS_dbo.POS_NOTAS_DETALHES.STATUS='C' THEN
-		1
-	ELSE
-		0
-	END) AS IS_CANCELADO,        
-    0 AS CD_LOTE,
-    0 AS NUMERO_LOTE,
-    0 AS QTDE_PROD_LOTE,
-    0 AS REGISTROALTERADOITEM,
-    0 AS TIPO_IMPOSTO,
-    0 AS VALOR_IBPT_ITEM,
-    SIG_POS_dbo.POS_NOTAS_DETALHES.IBPT_NACIONAL AS PERCENTUAL_IBPT_ITEM,
-    '' AS NR_PROTOCOLO,
-    0 AS FLAG_CONSOLIDADO,
-    0 AS PERC_DESC_DIFF
-   FROM 
-		SIG_POS_dbo.POS_NOTAS_TOTAIS INNER JOIN SIG_POS_dbo.POS_NOTAS_DETALHES ON 
-        SIG_POS_dbo.POS_NOTAS_TOTAIS.ID_NOTA = SIG_POS_dbo.POS_NOTAS_DETALHES.ID_NOTA        
-  WHERE SIG_POS_dbo.POS_NOTAS_TOTAIS.STATUS='C';
+	'' AS NM_CONV,
+    SIG_POS_dbo.V_REC_MOEDAS.VLR_CARTAO,
+    0 AS VLR_SAQUE,
+
+	200 CD_CONV,
+    1 AS QT_PARC,    
+    0 AS COD_REDE,
+    0 AS COD_BANDEIRA,
+    0 AS COD_MODALIDADE,
+    0 AS TP_ADMINISTRADORA,
+    0 AS NR_TRANSACAO,
+	0 AS NR_AUTORIZACAO,
+	'' AS BANDEIRA,
+    0 AS NR_ESTABELECIMENTO,
+    '' AS NR_COMPROVANTE,
+    'SITEF' AS TEF_GATEWAY,
+    pdv_vd.FLAG_CONSOLIDADO    
+FROM 
+	SIG_POS_dbo.POS_NOTAS_TOTAIS INNER JOIN SIG_POS_dbo.V_REC_MOEDAS ON 
+    SIG_POS_dbo.POS_NOTAS_TOTAIS.ID_NOTA=SIG_POS_dbo.V_REC_MOEDAS.ID_NOTA  INNER JOIN pdv_vd ON 
+    SIG_POS_dbo.POS_NOTAS_TOTAIS.ID_NOTA=pdv_vd.CD_VD
+  WHERE 
+    V_REC_MOEDAS.VLR_CARTAO>0
