@@ -11,6 +11,7 @@ HR_VD,
 CD_CX,
 CD_VD, 
 NR_ECF,
+ST_VD,
 
 0 AS CD_CONV,    
 '' AS NM_CONV,    
