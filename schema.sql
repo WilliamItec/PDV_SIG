@@ -7,6 +7,16 @@ create table if not exists prc_filial (
 
 $$
 
+create table if not exists prc_emp_config (
+    cd_emp int,
+    cd_chave varchar(255),
+    valor varchar(255),
+    cd_usu int,
+    dt_ult_alt timestamp
+)
+
+$$
+
 create table if not exists prc_filial_config (
     cd_emp int,
     cd_filial int,
@@ -64,7 +74,7 @@ $$
 create trigger tg_pdv_vd_flag_consolidado_insert AFTER INSERT on `POS_NOTAS_TOTAIS`
 for each row
 begin
-    if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS = 'C' 
+    if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') 
     then
         insert into pdv_vd
         (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
@@ -82,7 +92,7 @@ $$
 create trigger tg_pdv_vd_flag_consolidado_update AFTER UPDATE on `POS_NOTAS_TOTAIS`
 for each row
 begin
-if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS = 'C' 
+if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') 
 then
     insert into pdv_vd
     (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
