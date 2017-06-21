@@ -7,6 +7,16 @@ create table if not exists prc_filial (
 
 $$
 
+create table if not exists prc_emp_config (
+    cd_emp int,
+    cd_chave varchar(255),
+    valor varchar(255),
+    cd_usu int,
+    dt_ult_alt timestamp
+)
+
+$$
+
 create table if not exists prc_filial_config (
     cd_emp int,
     cd_filial int,
