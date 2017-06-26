@@ -41,7 +41,9 @@ null AS CD_CTR_VALE_CP,
 0 AS NR_CEL_RECARGA,
 
 1 as contem_dinheiro,
+
 1 as contem_convenio,
+null as contem_recarga_cel,
 null as contem_duplicata,
 
 (SELECT 1 FROM POS_RECEBIMENTOS WHERE POS_NOTAS_TOTAIS.ID_NOTA =  ID_NOTA AND ID_MOEDA = 5) as contem_ncc,
