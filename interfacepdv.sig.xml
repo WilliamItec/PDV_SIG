@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    
+    
+    <bean id="sig.dataSource" destroy-method="close" class="org.apache.tomcat.dbcp.dbcp.BasicDataSource" >
+        <property name="driverClassName" value= "${mysql.driver}" />
+        <property name="url" value="${mysql.url}" />
+        <property name="username" value="${mysql.user}" />
+        <property name="password" value="${mysql.password}" />
+        <property name="maxActive" value="8"/>
+        <property name="maxWait" value="3000"/>
+        <property name="testOnBorrow" value="true" />
+        <property name="validationQuery" value="select current_date;" />
+        <property name="removeAbandoned" value="true"/>
+        <property name="removeAbandonedTimeout" value="240"/>
+        <property name="logAbandoned" value="true"/>
+    </bean>
+    
+   
+    
+</beans>
