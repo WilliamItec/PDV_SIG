@@ -22,7 +22,7 @@ if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') then
             insert into pdv_vd
             (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
             values
-            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,0,0);
+            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,case NEW.status when 'C' then 0 else 1 end,0);
         end;
     end if;
 end if;
@@ -52,7 +52,7 @@ if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') then
             insert into pdv_vd
             (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
             values
-            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,0,0);
+            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,case NEW.status when 'C' then 0 else 1 end,0);
         end;
     end if;
 end if;
