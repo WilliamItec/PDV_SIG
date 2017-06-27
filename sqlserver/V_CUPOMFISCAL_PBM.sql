@@ -31,7 +31,7 @@ END
     
 '' AS CGC_CONV,        
 VLR_CONV_PBM AS VLR_CONV,    
-'' AS CD_AUTORIZACAO,
+null AS CD_AUTORIZACAO,
 1 AS CD_IT,    
 
 (
