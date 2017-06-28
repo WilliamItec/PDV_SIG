@@ -97,3 +97,37 @@ if NEW.tipo = 'G' and NEW.status = 'F' then
     end;
 end if;
 end; 
+
+$$
+
+drop trigger if exists tg_pdv_mapa_resumo_flag_consolidado;
+
+$$
+
+create trigger tg_pdv_consld_vd_flag_conslidado AFTER INSERT on `PAF_MOVIMENTO_REDUCAO_TOTAIS`
+for each row
+begin
+
+delete from pdv_mapa_resumo where dt_ecf = str_to_date(NEW.data_movimento,'%d%m%Y') and cd_cx = NEW.numero_usuario;
+
+insert into pdv_mapa_resumo
+(cd_emp,cd_filial,cd_cx,dt_ecf,dt_cad,id_ecf,cro,crz,flag_consolidado)
+values
+(
+1
+,(select firma from POS_CFG limit 1)
+,numero_usuario
+,str_to_date(data_movimento,'%d%m%Y')
+,str_to_date(data_movimento,'%d%m%Y')
+,id_ecf
+,cro
+,crz
+,0
+);
+        
+end;
+
+$$
+
+
+delimiter ;

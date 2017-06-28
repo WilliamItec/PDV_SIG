@@ -1,7 +1,11 @@
+drop table if exists prc_filial;
+
 create table if not exists prc_filial (
     cd_emp int,
     cd_filial int
 );
+
+drop table if exists prc_emp_config;
 
 create table if not exists prc_emp_config (
     cd_emp int,
@@ -11,6 +15,8 @@ create table if not exists prc_emp_config (
     dt_ult_alt timestamp
 );
 
+drop table if exists prc_filial_config;
+
 create table if not exists prc_filial_config (
     cd_emp int,
     cd_filial int,
@@ -19,6 +25,8 @@ create table if not exists prc_filial_config (
     cd_usu int,
     dt_ult_alt timestamp
 );
+
+drop table if exists pdv_vd;
 
 create table if not exists pdv_vd (
     cd_emp int default 1,
@@ -69,26 +77,13 @@ cd_emp              int
 ,cd_cx              int
 ,dt_ecf             date
 ,dt_cad             datetime
-,cont_red_z         int
+,id_ecf 			int
+,cro         		int
+,crz 				int
 ,flag_consolidado   int default 0
 ,constraint pk_pdv_mapa_resumo primary key(cd_emp,cd_filial,cd_cx,dt_ecf)
 ,index ix_pdv_mapa_resumo_flag_consolidado(flag_consolidado)
 );
-
-drop view if exists v_maparesumo;
-
-create view v_maparesumo
-as
-select
-cd_emp,
-cd_filial,
-cd_cx,
-cont_red_z,
-flag_consolidado,
-1 as mapa_resumo
-from
-pdv_mapa_resumo;
-
 
 drop view if exists v_orcamento;
 
