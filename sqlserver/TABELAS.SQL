@@ -1,17 +1,23 @@
-if object_id('prc_filial') is null
+if object_id('prc_filial') is not null
 begin
+    drop table prc_filial
+end
+
+;
 
 create table  prc_filial (
     cd_emp int,
     cd_filial int
 )
 
+;
+
+if object_id('prc_emp_config') is not null
+begin
+    drop table prc_emp_config
 end
 
 ;
-
-if object_id('prc_emp_config') is null
-begin
 
 create table  prc_emp_config (
     cd_emp int,
@@ -21,12 +27,13 @@ create table  prc_emp_config (
     dt_ult_alt timestamp
 )
 
-end
-
 ;
 
-if object_id('prc_filial_config') is null
+if object_id('prc_filial_config') is not null
 begin
+    drop table prc_filial_config
+end
+;
 
 create table  prc_filial_config (
     cd_emp int,
@@ -37,12 +44,14 @@ create table  prc_filial_config (
     dt_ult_alt timestamp
 )
 
+;
+
+if object_id('pdv_vd') is not null
+begin
+    drop table pdv_vd
 end
 
 ;
-
-if object_id('pdv_vd') is null
-begin
 
 create table  pdv_vd (
     cd_emp int default 1,
@@ -55,12 +64,15 @@ create table  pdv_vd (
     flag_consolidado int default 0
 )
 
-end
 
 ;
 
-if object_id('pdv_cupom_nao_fiscal') is null
+if object_id('pdv_cupom_nao_fiscal') is not null
 begin
+    drop table pdv_cupom_nao_fiscal
+end
+
+;
 
 create table  pdv_cupom_nao_fiscal (
     cd_emp int default 1,
@@ -72,12 +84,14 @@ create table  pdv_cupom_nao_fiscal (
     flag_consolidado int default 0
 )
 
+;
+
+if object_id('pdv_consld_vd') is not null
+begin
+    drop table pdv_consld_vd
 end
 
 ;
-
-if object_id('pdv_consld_vd') is null
-begin
 
 create table  pdv_consld_vd (
 cd_emp              int
@@ -93,12 +107,15 @@ cd_emp              int
 ,constraint pk_pdv_consld_vd primary key(cd_emp,cd_filial,cd_cx,dt_mov)
 )
 
-end
 
 ;
 
-if object_id('pdv_mapa_resumo') is null
+if object_id('pdv_mapa_resumo') is not null
 begin
+    drop table pdv_mapa_resumo
+end
+;
+
 
 create table  pdv_mapa_resumo (
 cd_emp              int
@@ -106,12 +123,12 @@ cd_emp              int
 ,cd_cx              int
 ,dt_ecf             datetime
 ,dt_cad             datetime
-,cont_red_z         int
+,id_ecf             int
+,cro                int
+,crz                int
 ,flag_consolidado   int default 0
 ,constraint pk_pdv_mapa_resumo primary key(cd_emp,cd_filial,cd_cx,dt_ecf)
 )
-
-end
 
 ;
 
