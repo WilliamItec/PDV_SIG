@@ -85,6 +85,21 @@ cd_emp              int
 ,index ix_pdv_mapa_resumo_flag_consolidado(flag_consolidado)
 );
 
+drop view if exists v_maparesumo;
+
+create view v_maparesumo
+as
+select
+cd_emp,
+cd_filial,
+cd_cx,
+0 as cont_red_z,
+flag_consolidado,
+1 as mapa_resumo
+from
+pdv_mapa_resumo;
+
+
 drop view if exists v_orcamento;
 
 create view v_orcamento

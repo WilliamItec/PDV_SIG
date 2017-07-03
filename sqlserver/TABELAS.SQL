@@ -147,7 +147,7 @@ select
 cd_emp,
 cd_filial,
 cd_cx,
-cont_red_z,
+0 as cont_red_z,
 flag_consolidado,
 1 as mapa_resumo
 from

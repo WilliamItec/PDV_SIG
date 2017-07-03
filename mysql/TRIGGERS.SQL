@@ -91,6 +91,9 @@ if NEW.tipo = 'G' and NEW.status = 'F' then
         id_motivo = 'POS015' 
         and status = 'C'
         and data_caixa = NEW.data_caixa
+        and not exists (
+            select 1 from v_naofiscal where id_nota = POS_NOTAS_TOTAIS.id_nota
+        )
         group by
         origem,id_estacao,data_caixa;
         
@@ -104,7 +107,7 @@ drop trigger if exists tg_pdv_mapa_resumo_flag_consolidado;
 
 $$
 
-create trigger tg_pdv_consld_vd_flag_conslidado AFTER INSERT on `PAF_MOVIMENTO_REDUCAO_TOTAIS`
+create trigger tg_pdv_mapa_resumo_flag_consolidado AFTER INSERT on `PAF_MOVIMENTO_REDUCAO_TOTAIS`
 for each row
 begin
 
@@ -131,3 +134,7 @@ $$
 
 
 delimiter ;
+
+
+update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >= DATE_SUB(current_date, interval 1 day);
+update POS_CAIXA set id_estacao = id_estacao where data_caixa >= DATE_SUB(current_date, interval 1 day);
