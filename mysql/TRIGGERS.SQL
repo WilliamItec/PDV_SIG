@@ -105,6 +105,8 @@ $$
 
 drop trigger if exists tg_pdv_mapa_resumo_flag_consolidado;
 
+/*
+
 $$
 
 create trigger tg_pdv_mapa_resumo_flag_consolidado AFTER INSERT on `PAF_MOVIMENTO_REDUCAO_TOTAIS`
@@ -119,7 +121,7 @@ values
 (
 1
 ,(select firma from POS_CFG limit 1)
-,numero_usuario
+,NEW.numero_usuario
 ,str_to_date(data_movimento,'%d%m%Y')
 ,str_to_date(data_movimento,'%d%m%Y')
 ,id_ecf
@@ -130,11 +132,12 @@ values
         
 end;
 
-$$
+*/
 
+$$
 
 delimiter ;
 
 
-update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >= DATE_SUB(current_date, interval 1 day);
-update POS_CAIXA set id_estacao = id_estacao where data_caixa >= DATE_SUB(current_date, interval 1 day);
+--update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >= DATE_SUB(current_date, interval 1 day);
+update POS_CAIXA set id_estacao = id_estacao where data_caixa >= '20170701';

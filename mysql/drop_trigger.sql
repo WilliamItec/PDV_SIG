@@ -1,0 +1,2 @@
+drop trigger if exists tg_pdv_mapa_resumo_flag_consolidado;
+

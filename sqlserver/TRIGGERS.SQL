@@ -72,6 +72,7 @@ begin
 
     insert into pdv_consld_vd
     (cd_emp,cd_filial,cd_cx,dt_mov,nr_cupom_ini,nr_cupom_fim,vlr_vd_liq,dt_cad,cd_usu,flag_consolidado)
+
     select
     1 AS cd_emp 
     ,n.origem as cd_filial 
@@ -83,6 +84,7 @@ begin
     ,getdate() as dt_cad
     ,1 as cd_usu
     ,0 as flag_consolidado
+
     from
     POS_NOTAS_TOTAIS n, inserted i
     where
@@ -91,6 +93,10 @@ begin
     and n.data_caixa = i.data_caixa
     and i.tipo = 'G'
     and i.status = 'F'
+    and not exists (
+            select 1 from v_naofiscal where id_nota = POS_NOTAS_TOTAIS n.id_nota
+    )
+
     group by
     n.origem,n.id_estacao,n.data_caixa
 
@@ -98,6 +104,5 @@ end
 
 ;
 
-update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >=  DATEADD(dd, DATEDIFF(dd,1, getdate()), 0);
-
-update POS_CAIXA set id_estacao = id_estacao where data_caixa >=  DATEADD(dd, DATEDIFF(dd,1, getdate()), 0);
+--update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >=  DATEADD(dd, DATEDIFF(dd,1, getdate()), 0);
+--update POS_CAIXA set id_estacao = id_estacao where data_caixa >=  DATEADD(dd, DATEDIFF(dd,1, getdate()), 0);
