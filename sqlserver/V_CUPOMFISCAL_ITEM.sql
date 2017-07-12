@@ -3,7 +3,7 @@ begin
 	drop view v_cupomfiscal_item
 end
 
-;
+go
 
 CREATE VIEW v_cupomfiscal_item
 AS 
@@ -25,7 +25,7 @@ NULL AS CD_BARRA,
 item.QTD AS QT_IT,
 item.VALOR AS VLR_IT,
 (item.QTD * item.VALOR) AS TOT_IT,
-(CASE WHEN item.STATUS='C' THEN 1 ELSE 0 END) AS ST_IT,
+(CASE WHEN item.STATUS='X' THEN 2 ELSE 1 END) AS ST_IT,
 0 AS TIPO_DESCONTO,
 0 AS TX_DESC,
 0 AS VLR_DESC_VERBA,
@@ -40,7 +40,7 @@ NULL AS NM_VEND,
 0 AS CD_USU_CANCEL,
 NULL AS NM_USU_CANCEL,
 0 AS CD_GRUPO_COMISSAO,
-(CASE WHEN item.STATUS='C' THEN 2 ELSE 1 END) AS IS_CANCELADO,        
+(CASE WHEN item.STATUS='X' THEN 1 ELSE 0 END) AS IS_CANCELADO,        
 0 AS CD_LOTE,
 0 AS NUMERO_LOTE,
 0 AS QTDE_PROD_LOTE,
@@ -56,3 +56,4 @@ INNER JOIN POS_NOTAS_DETALHES item
 ON 
 v_cupomfiscal.id_nota = item.ID_NOTA        
 
+go

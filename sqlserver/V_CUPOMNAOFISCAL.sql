@@ -53,4 +53,4 @@ on
 cupom.nr_coo = nota.id_nota
 inner join POS_NOTAS_DETALHES det
 on
-det.id_nota = nota.id_nota
+det.id_nota = nota.id_notago

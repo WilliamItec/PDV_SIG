@@ -3,7 +3,7 @@ begin
 	drop view v_cupomfiscal_cartao
 end
 
-;
+go
 
 CREATE VIEW v_cupomfiscal_cartao AS 
 SELECT 
@@ -35,4 +35,6 @@ VLR_CARTAO,
 FROM 
 v_cupomfiscal
 WHERE 
-vlr_cartao > 0
+vlr_cartao > 0;
+
+go

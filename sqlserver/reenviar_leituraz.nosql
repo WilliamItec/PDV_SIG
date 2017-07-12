@@ -1,0 +1,2 @@
+update POS_CAIXA set id_estacao = id_estacao where data_caixa > '20170701';
+go

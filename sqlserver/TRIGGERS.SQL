@@ -3,7 +3,7 @@ begin
     drop trigger tg_pdv_vd_flag_consolidado
 end
 
-;
+go
 
 create trigger tg_pdv_vd_flag_consolidado ON POS_NOTAS_TOTAIS for INSERT,UPDATE
 as
@@ -24,14 +24,14 @@ begin
   
 end
 
-;
+go
 
 if object_id('tg_pdv_cupom_nao_fiscal_flag_consollidado') is not null
 begin
     drop trigger tg_pdv_cupom_nao_fiscal_flag_consollidado
 end
 
-;
+go
 
 create trigger tg_pdv_cupom_nao_fiscal_flag_consollidado ON POS_NOTAS_TOTAIS for INSERT,UPDATE
 as
@@ -52,7 +52,7 @@ begin
    
 end
 
-;
+go
 
 
 if object_id('tg_pdv_consld_vd_flag_conslidado') is not null
@@ -60,7 +60,7 @@ begin
     drop trigger tg_pdv_consld_vd_flag_conslidado
 end
 
-;
+go
 
 create trigger tg_pdv_consld_vd_flag_conslidado on POS_CAIXA for UPDATE 
 as
@@ -100,7 +100,7 @@ begin
 
 end
 
-;
+go
 
 --update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >=  DATEADD(dd, DATEDIFF(dd,1, getdate()), 0);
 --update POS_CAIXA set id_estacao = id_estacao where data_caixa >=  DATEADD(dd, DATEDIFF(dd,1, getdate()), 0);

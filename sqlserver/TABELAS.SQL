@@ -3,21 +3,21 @@ begin
     drop table prc_filial
 end
 
-;
+go
 
 create table  prc_filial (
     cd_emp int,
     cd_filial int
 )
 
-;
+go
 
 if object_id('prc_emp_config') is not null
 begin
     drop table prc_emp_config
 end
 
-;
+go
 
 create table  prc_emp_config (
     cd_emp int,
@@ -27,13 +27,13 @@ create table  prc_emp_config (
     dt_ult_alt timestamp
 )
 
-;
+go
 
 if object_id('prc_filial_config') is not null
 begin
     drop table prc_filial_config
 end
-;
+go
 
 create table  prc_filial_config (
     cd_emp int,
@@ -44,14 +44,14 @@ create table  prc_filial_config (
     dt_ult_alt timestamp
 )
 
-;
+go
 
 if object_id('pdv_vd') is not null
 begin
     drop table pdv_vd
 end
 
-;
+go
 
 create table  pdv_vd (
     cd_emp int default 1,
@@ -65,14 +65,14 @@ create table  pdv_vd (
 )
 
 
-;
+go
 
 if object_id('pdv_cupom_nao_fiscal') is not null
 begin
     drop table pdv_cupom_nao_fiscal
 end
 
-;
+go
 
 create table  pdv_cupom_nao_fiscal (
     cd_emp int default 1,
@@ -84,14 +84,14 @@ create table  pdv_cupom_nao_fiscal (
     flag_consolidado int default 0
 )
 
-;
+go
 
 if object_id('pdv_consld_vd') is not null
 begin
     drop table pdv_consld_vd
 end
 
-;
+go
 
 create table  pdv_consld_vd (
 cd_emp              int
@@ -108,13 +108,13 @@ cd_emp              int
 )
 
 
-;
+go
 
 if object_id('pdv_mapa_resumo') is not null
 begin
     drop table pdv_mapa_resumo
 end
-;
+go
 
 
 create table  pdv_mapa_resumo (
@@ -130,7 +130,7 @@ cd_emp              int
 ,constraint pk_pdv_mapa_resumo primary key(cd_emp,cd_filial,cd_cx,dt_ecf)
 )
 
-;
+go
 
 if object_id('v_maparesumo') is not null
 begin
@@ -139,7 +139,7 @@ drop view  v_maparesumo
 
 end
 
-;
+go
 
 create view v_maparesumo
 as
@@ -153,7 +153,7 @@ flag_consolidado,
 from
 pdv_mapa_resumo
 
-;
+go
 
 if object_id('v_orcamento') is not null
 begin
@@ -162,7 +162,7 @@ drop view  v_orcamento
 
 end
 
-;
+go
 
 create view v_orcamento
 as
@@ -173,7 +173,7 @@ pdv_vd
 where
 1 = 2
 
-;
+go
 
 if object_id('v_cupomfiscal_crediario') is not null
 begin
@@ -182,7 +182,7 @@ drop view  v_cupomfiscal_crediario
 
 end
 
-;
+go
 
 create view v_cupomfiscal_crediario
 as
@@ -193,7 +193,7 @@ pdv_vd
 where 
 1 = 2
 
-;
+go
 
 if object_id('v_cupomfiscal_cheque') is not null
 begin
@@ -202,7 +202,7 @@ drop view  v_cupomfiscal_cheque
 
 end
 
-;
+go
 
 create view v_cupomfiscal_cheque 
 as
@@ -213,7 +213,7 @@ pdv_vd
 where 
 1 = 2
 
-;
+go
 
 if object_id('v_cupomfiscal_vale_compra') is not null
 begin
@@ -222,7 +222,7 @@ drop view  v_cupomfiscal_vale_compra
 
 end
 
-;
+go
 
 create view v_cupomfiscal_vale_compra 
 as
@@ -233,7 +233,7 @@ pdv_vd
 where 
 1 = 2
 
-;
+go
 
 if object_id('v_cupomfiscal_item_receita') is not null
 begin
@@ -242,7 +242,7 @@ drop view  v_cupomfiscal_item_receita
 
 end
 
-;
+go
 
 create view v_cupomfiscal_item_receita
 as
@@ -253,7 +253,7 @@ pdv_vd
 where 
 1 = 2
 
-;
+go
 
 if object_id('v_cupomnaofiscal_cheque') is not null
 begin
@@ -262,7 +262,7 @@ drop view  v_cupomnaofiscal_cheque
 
 end
 
-;
+go
 
 create view v_cupomnaofiscal_cheque
 as
@@ -272,7 +272,7 @@ from pdv_cupom_nao_fiscal
 where
 1 = 2
 
-;
+go
 
 if object_id('v_cupomnaofiscal_tef') is not null
 begin
@@ -281,7 +281,7 @@ drop view  v_cupomnaofiscal_tef
 
 end
 
-;
+go
 
 create view v_cupomnaofiscal_tef
 as
@@ -291,7 +291,7 @@ from pdv_cupom_nao_fiscal
 where
 1 = 2
 
-;
+go
 
 if object_id('v_naofiscal') is not null
 begin
@@ -300,7 +300,7 @@ drop view  v_naofiscal
 
 end
 
-;
+go
 
 create view v_naofiscal
 as

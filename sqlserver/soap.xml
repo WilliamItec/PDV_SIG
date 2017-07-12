@@ -1,0 +1,10 @@
+POST /datasync-client/services/CupomFiscalWs HTTP/1.0
+SOAPAction: ""
+Content-Type: text/xml; charset="utf-8"
+Content-Length: 172
+
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+    <Body>
+        <getQuantidadePendente xmlns="http://datasync.api.itecbrazil.com/"/>
+    </Body>
+</Envelope>

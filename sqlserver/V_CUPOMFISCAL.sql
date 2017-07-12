@@ -3,7 +3,7 @@ begin
 	drop view v_cupomfiscal
 end
 
-;
+go
 
 CREATE VIEW v_cupomfiscal
 AS 
@@ -98,6 +98,7 @@ and pdv_vd.cd_vd = POS_NOTAS_TOTAIS.ID_NOTA
 
 left join MTZ_CLIENTES 
 on
-POS_NOTAS_TOTAIS.id_cliente=MTZ_CLIENTES.id_cliente 
+POS_NOTAS_TOTAIS.id_cliente=MTZ_CLIENTES.id_cliente ;
 
 
+go
