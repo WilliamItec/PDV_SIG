@@ -7,7 +7,7 @@ $$
 create trigger tg_pdv_vd_flag_consolidado_insert AFTER INSERT on `POS_NOTAS_TOTAIS`
 for each row
 begin
-if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') then
+if NEW.ID_MOTIVO = 'POS015'  then
     delete from pdv_vd where cd_vd = NEW.ID_NOTA;
     delete from pdv_cupom_nao_fiscal where nr_coo = NEW.ID_NOTA;
     if (select true from v_naofiscal where id_nota = NEW.id_nota) then
@@ -22,7 +22,7 @@ if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') then
             insert into pdv_vd
             (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
             values
-            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,case NEW.status when 'C' then 0 else 1 end,0);
+            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,case NEW.status when 'X' then 1 else 0 end,0);
         end;
     end if;
 end if;
@@ -37,7 +37,7 @@ $$
 create trigger tg_pdv_vd_flag_consolidado_update AFTER UPDATE on `POS_NOTAS_TOTAIS`
 for each row
 begin
-if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') then
+if NEW.ID_MOTIVO = 'POS015' then
     delete from pdv_vd where cd_vd = NEW.ID_NOTA;
     delete from pdv_cupom_nao_fiscal where nr_coo = NEW.ID_NOTA;
     if (select true from v_naofiscal where id_nota = NEW.id_nota) then
@@ -52,7 +52,7 @@ if NEW.ID_MOTIVO = 'POS015' AND NEW.STATUS IN ('C','X') then
             insert into pdv_vd
             (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
             values
-            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,case NEW.status when 'C' then 0 else 1 end,0);
+            (1,NEW.origem,NEW.id_estacao,NEW.data_caixa,NEW.id_nota,NEW.id_nota,case NEW.status when 'X' then 1 else 0 end,0);
         end;
     end if;
 end if;
@@ -105,6 +105,8 @@ $$
 
 drop trigger if exists tg_pdv_mapa_resumo_flag_consolidado;
 
+$$
+
 /*
 
 $$
@@ -132,12 +134,14 @@ values
         
 end;
 
+
+update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >= DATE_SUB(current_date, interval 1 day);
+update POS_CAIXA set id_estacao = id_estacao where data_caixa >= '20170701';
+
 */
 
-$$
+
 
 delimiter ;
 
 
---update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >= DATE_SUB(current_date, interval 1 day);
-update POS_CAIXA set id_estacao = id_estacao where data_caixa >= '20170701';

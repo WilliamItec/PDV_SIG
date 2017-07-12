@@ -9,16 +9,15 @@ create trigger tg_pdv_vd_flag_consolidado ON POS_NOTAS_TOTAIS for INSERT,UPDATE
 as
 begin
 
-         delete v from pdv_vd v, inserted i where cd_vd = i.id_nota
+        delete v from pdv_vd v, inserted i where cd_vd = i.id_nota
         insert into pdv_vd
         (cd_emp,cd_filial,cd_cx,dt_vd,cd_vd,nr_ecf,st_vd,flag_consolidado)
         select
-        1 as cd_emp,origem,id_estacao,data_caixa,id_nota,id_nota,case when status = 'C' then 0 else 1 end as st_vd,0 as flag_consolidado
+        1 as cd_emp,origem,id_estacao,data_caixa,id_nota,id_nota,case when status = 'X' then 1 else 0 end as st_vd,0 as flag_consolidado
         from
         inserted
         where 
         ID_MOTIVO = 'POS015' 
-        AND STATUS IN ('C','X')
         AND NOT EXISTS (
              SELECT 1 FROM V_NAOFISCAL WHERE ID_NOTA = INSERTED.ID_NOTA
         )
@@ -38,7 +37,7 @@ create trigger tg_pdv_cupom_nao_fiscal_flag_consollidado ON POS_NOTAS_TOTAIS for
 as
 begin
    
-         delete v from pdv_cupom_nao_fiscal v, inserted i where nr_coo = i.id_nota
+        delete v from pdv_cupom_nao_fiscal v, inserted i where nr_coo = i.id_nota
         insert into pdv_cupom_nao_fiscal
         (cd_emp,cd_filial,cd_cx,dt_cupom,cd_ctr,nr_coo,flag_consolidado)
         select
@@ -47,7 +46,6 @@ begin
         inserted
         where 
         ID_MOTIVO = 'POS015' 
-          AND STATUS IN ('C','X')
           AND EXISTS (
              SELECT 1 FROM V_NAOFISCAL WHERE ID_NOTA = INSERTED.ID_NOTA
         )
@@ -94,7 +92,7 @@ begin
     and i.tipo = 'G'
     and i.status = 'F'
     and not exists (
-            select 1 from v_naofiscal where id_nota = POS_NOTAS_TOTAIS n.id_nota
+            select 1 from v_naofiscal where id_nota = n.id_nota
     )
 
     group by

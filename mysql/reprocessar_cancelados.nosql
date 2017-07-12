@@ -1,0 +1,1 @@
+update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >= '20170701' and status = 'X';
