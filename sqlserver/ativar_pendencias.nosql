@@ -1,8 +1,3 @@
 update POS_NOTAS_TOTAIS set id_estacao = id_estacao where data_caixa >= '20170701';
-go
 update POS_CAIXA set id_estacao = id_estacao where data_caixa >=  '20170701';
-go
-update pdv_vd set flag_consolidado = 2;
-go
-update pdv_consld_vd set flag_consolidado = 2;
 go
